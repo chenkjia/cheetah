@@ -2,47 +2,53 @@ const { Controller } = require('egg');
 const axios = require('axios');
 
 const rpcList = [{
-  // name: 'FLASHBOTS',
-  // url: 'https://relay.flashbots.net',
-}, {
+//   name: 'FLASHBOTS',
+//   url: 'https://relay.flashbots.net',
+// }, {
   name: 'BUILDER0X69',
   url: 'http://builder0x69.io/',
-// }, {
-//   name: 'EDENNETWORK',
-//   url: 'https://api.edennetwork.io/v1/bundle',
-// }, {
-//   name: 'BEAVERBUILD',
-//   url: 'https://rpc.beaverbuild.org/',
-// }, {
-//   name: 'LIGHTSPEEDBUILDER',
-//   url: 'https://rpc.lightspeedbuilder.info/',
-// }, {
-//   name: 'ETH_BUILDER',
-//   url: 'https://eth-builder.com/',
-// }, {
-//   name: 'ULTRASOUND',
-//   url: 'https://relay.ultrasound.money/',
+}, {
+  name: 'BEAVERBUILD',
+  url: 'https://rpc.beaverbuild.org/',
+}, {
+  name: 'RSYNC',
+  url: 'https://rsync-builder.xyz',
+}, {
+  name: 'TITAN',
+  url: 'https://rpc.titanbuilder.xyz',
+}, {
+  name: 'JETBLDR',
+  url: 'https://rpc.jetbldr.xyz',
+}, {
+  name: 'GMBIT',
+  url: 'https://builder.gmbit.co/rpc',
 }];
 class SendBundleController extends Controller {
   async index() {
     const { ctx } = this;
-    console.log(ctx.request.body);
-    ctx.body = 'hi, egg';
-    rpcList.forEach(async ({ url }) => {
-      return await axios.post(url, {
-        jsonrpc: '2.0',
-        id: 1,
-        method: 'eth_sendBundle',
-        params: [
-          {
-            txs: [ '0x123abc...', '0x456def...' ],
-            blockNumber: '0xb63dcd',
-            minTimestamp: 0,
-            maxTimestamp: 1615920932,
-          },
-        ],
-      }).then(console.log).catch(console.error);
-    });
+    // 请求配置
+    const config = {
+      method: 'post', // 设置请求方法为 POST
+      headers: {
+        'Content-Type': 'application/json', // 设置请求头的 Content-Type
+        // 'X-Flashbots-Signature': ctx.request.body.signature, // 设置 Authorization 头（示例：Bearer token）
+      },
+      data: ctx.request.body.postData, // 将请求体数据传递给 data 属性
+    };
+    const result = await Promise.all(rpcList.map(({ url }) => {
+      return axios({
+        ...config,
+        url, // 请求的 URL
+      });
+    }));
+    const resultBody = result.map(({ config, data }) => ({
+      url: config.url,
+      ...data,
+    }));
+    console.log(resultBody);
+    ctx.type = 'json';
+    ctx.body = resultBody;
+    return;
   }
 }
 
